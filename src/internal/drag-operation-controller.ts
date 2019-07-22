@@ -245,7 +245,7 @@ export class DragOperationController {
         return true;
     }
 
-    private _cleanup() {
+    public _cleanup() {
 
         console.log( "dnd-poly: cleanup" );
 
