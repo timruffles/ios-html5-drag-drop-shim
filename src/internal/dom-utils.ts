@@ -34,7 +34,7 @@ export function onEvt(el:EventTarget, event:string, handler:EventListener, captu
     };
 }
 
-function prepareNodeCopyAsDragImage( srcNode:HTMLElement, dstNode:HTMLElement ) {
+function prepareNodeCopyAsDragImage( srcNode:HTMLElement, dstNode:HTMLElement, firstNode:boolean ) {
 
     // Is this node an element?
     if( srcNode.nodeType === 1 ) {
@@ -44,6 +44,11 @@ function prepareNodeCopyAsDragImage( srcNode:HTMLElement, dstNode:HTMLElement ) 
         for( let i = 0; i < cs.length; i++ ) {
             const csName = cs[ i ];
             dstNode.style.setProperty( csName, cs.getPropertyValue( csName ), cs.getPropertyPriority( csName ) );
+        }
+        
+        // remove potential conflict if first node has transform
+        if( firstNode ) {
+            dstNode.style.transform = "";
         }
 
         // no interaction with the drag image, pls! this is also important to make the drag image transparent for hit-testing
@@ -74,7 +79,7 @@ function prepareNodeCopyAsDragImage( srcNode:HTMLElement, dstNode:HTMLElement ) 
 
         for( let i = 0; i < srcNode.childNodes.length; i++ ) {
 
-            prepareNodeCopyAsDragImage( <HTMLElement>srcNode.childNodes[ i ], <HTMLElement>dstNode.childNodes[ i ] );
+            prepareNodeCopyAsDragImage( <HTMLElement>srcNode.childNodes[ i ], <HTMLElement>dstNode.childNodes[ i ], false );
         }
     }
 }
@@ -84,7 +89,7 @@ export function createDragImage( sourceNode:HTMLElement ):HTMLElement {
     const dragImage = <HTMLElement>sourceNode.cloneNode( true );
 
     // this removes any id's and stuff that could interfere with drag and drop
-    prepareNodeCopyAsDragImage( sourceNode, dragImage );
+    prepareNodeCopyAsDragImage( sourceNode, dragImage, true );
 
     return dragImage;
 }
