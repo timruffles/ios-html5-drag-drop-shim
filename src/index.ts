@@ -28,6 +28,8 @@ function onTouchstart( e:TouchEvent ) {
     // only allow one drag operation at a time
     if( activeDragOperation ) {
         console.log( "dnd-poly: drag operation already active" );
+        // try avoid infinite loop on iOS if something happened with draggable dom object (disappeared or changed during drag)
+        activeDragOperation.cleanup();
         return;
     }
 

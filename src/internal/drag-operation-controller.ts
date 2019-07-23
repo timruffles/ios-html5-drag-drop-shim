@@ -173,7 +173,7 @@ export class DragOperationController {
             console.log( "dnd-poly: dragstart cancelled" );
             // dragstart has been prevented -> cancel d'n'd
             this._dragOperationState = DragOperationState.CANCELLED;
-            this._cleanup();
+            this.cleanup();
             return false;
         }
 
@@ -245,7 +245,7 @@ export class DragOperationController {
         return true;
     }
 
-    private _cleanup() {
+    public cleanup() {
 
         console.log( "dnd-poly: cleanup" );
 
@@ -304,7 +304,7 @@ export class DragOperationController {
 
             if( !startDrag ) {
 
-                this._cleanup();
+                this.cleanup();
                 return;
             }
 
@@ -398,7 +398,7 @@ export class DragOperationController {
 
         // drag operation did not even start
         if( this._dragOperationState === DragOperationState.POTENTIAL ) {
-            this._cleanup();
+            this.cleanup();
             return;
         }
 
@@ -796,7 +796,7 @@ export class DragOperationController {
 
         // drag operation over and out
         this._dragOperationState = DragOperationState.ENDED;
-        this._cleanup();
+        this.cleanup();
     }
 
     //</editor-fold>

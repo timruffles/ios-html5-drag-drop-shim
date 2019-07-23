@@ -29,7 +29,7 @@ export declare class DragOperationController {
     private _iterationIntervalId;
     constructor(_initialEvent: TouchEvent, _config: Config, _sourceNode: HTMLElement, _dragOperationEndedCb: (config: Config, event: TouchEvent, state: DragOperationState) => void);
     private _setup();
-    private _cleanup();
+    cleanup();
     private _onTouchMove(event);
     private _onTouchEndOrCancel(event);
     private _dragAndDropProcessModelIteration();
