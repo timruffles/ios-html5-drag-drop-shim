@@ -50,16 +50,10 @@ function getElementViewportOffset( el:HTMLElement, axis:ScrollAxis ) {
 }
 
 function getElementViewportSize( el:HTMLElement, axis:ScrollAxis ) {
-    let size:number;
-
-    if( isTopLevelEl( el ) ) {
-        size = (axis === ScrollAxis.HORIZONTAL) ? window.innerWidth : window.innerHeight;
+    if(isTopLevelEl( el )) {
+        return (axis === ScrollAxis.HORIZONTAL) ? Math.min(el.clientWidth, window.innerWidth) : Math.min(el.clientHeight, window.innerHeight);
     }
-    else {
-        size = (axis === ScrollAxis.HORIZONTAL) ? el.clientWidth : el.clientHeight;
-    }
-
-    return size;
+    return (axis === ScrollAxis.HORIZONTAL) ? el.clientWidth : el.clientHeight;
 }
 
 function getSetElementScroll( el:HTMLElement, axis:ScrollAxis, scroll?:number ) {
@@ -88,14 +82,25 @@ function getSetElementScroll( el:HTMLElement, axis:ScrollAxis, scroll?:number ) 
 
 //TODO check if scroll end is reached according to scroll intention? this is needed to implement scroll chaining
 function isScrollable( el:HTMLElement ):boolean {
-    const cs = getComputedStyle( el );
 
-    if( el.scrollHeight > el.clientHeight && (cs.overflowY === "scroll" || cs.overflowY === "auto") ) {
-        return true;
+    if( el.scrollHeight > el.clientHeight ) {
+
+        if( el === document.documentElement ) {
+            return true;
+        }
+
+        const cs = getComputedStyle( el );
+        return cs.overflowY === "scroll" || cs.overflowY === "auto";
     }
 
-    if( el.scrollWidth > el.clientWidth && (cs.overflowX === "scroll" || cs.overflowX === "auto") ) {
-        return true;
+    if( el.scrollWidth > el.clientWidth ) {
+
+        if( el === document.documentElement ) {
+            return true;
+        }
+
+        const cs = getComputedStyle( el );
+        return cs.overflowX === "scroll" || cs.overflowX === "auto";
     }
 
     return false;
@@ -194,6 +199,7 @@ let _currentCoordinates:Point;
 let _hoveredElement:HTMLElement;
 let _scrollableParent:HTMLElement;
 let _translateDragImageFn:( offsetX:number, offsetY:number ) => void;
+let _scrollableParentBounds:IScrollBounds;
 
 /**
  * core handler function
@@ -298,43 +304,44 @@ function updateScrollIntentions( currentCoordinates:Point,
         return false;
     }
 
-    const scrollableParentBounds:IScrollBounds = {
+    const updateScrollWidth:boolean = _scrollableParentBounds === undefined || _scrollableParentBounds.scrollWidth === undefined || scrollableParent === undefined;
+    const updateScrollHeight:boolean = _scrollableParentBounds === undefined || _scrollableParentBounds.scrollHeight === undefined || scrollableParent === undefined;
+    _scrollableParentBounds = {
         x: getElementViewportOffset( scrollableParent, ScrollAxis.HORIZONTAL ),
         y: getElementViewportOffset( scrollableParent, ScrollAxis.VERTICAL ),
         width: getElementViewportSize( scrollableParent, ScrollAxis.HORIZONTAL ),
         height: getElementViewportSize( scrollableParent, ScrollAxis.VERTICAL ),
         scrollX: getSetElementScroll( scrollableParent, ScrollAxis.HORIZONTAL ),
         scrollY: getSetElementScroll( scrollableParent, ScrollAxis.VERTICAL ),
-        scrollWidth: scrollableParent.scrollWidth,
-        scrollHeight: scrollableParent.scrollHeight
+        scrollWidth: updateScrollWidth ? scrollableParent.scrollWidth : _scrollableParentBounds.scrollWidth,
+        scrollHeight: updateScrollHeight ? scrollableParent.scrollHeight : _scrollableParentBounds.scrollHeight
     };
-
     const currentCoordinatesOffset = {
-        x: currentCoordinates.x - scrollableParentBounds.x,
-        y: currentCoordinates.y - scrollableParentBounds.y
+        x: currentCoordinates.x - _scrollableParentBounds.x,
+        y: currentCoordinates.y - _scrollableParentBounds.y
     };
 
-    scrollIntentions.horizontal = determineScrollIntention( currentCoordinatesOffset.x, scrollableParentBounds.width, threshold );
-    scrollIntentions.vertical = determineScrollIntention( currentCoordinatesOffset.y, scrollableParentBounds.height, threshold );
+    scrollIntentions.horizontal = determineScrollIntention( currentCoordinatesOffset.x, _scrollableParentBounds.width, threshold );
+    scrollIntentions.vertical = determineScrollIntention( currentCoordinatesOffset.y, _scrollableParentBounds.height, threshold );
 
-    if( scrollIntentions.horizontal && isScrollEndReached( ScrollAxis.HORIZONTAL, scrollIntentions.horizontal, scrollableParentBounds ) ) {
+    if( scrollIntentions.horizontal && isScrollEndReached( ScrollAxis.HORIZONTAL, scrollIntentions.horizontal, _scrollableParentBounds ) ) {
 
         // if scroll end is reached, reset to none
         scrollIntentions.horizontal = ScrollIntention.NONE;
     }
     else if( scrollIntentions.horizontal ) {
 
-        dynamicVelocity.x = determineDynamicVelocity( scrollIntentions.horizontal, currentCoordinatesOffset.x, scrollableParentBounds.width, threshold );
+        dynamicVelocity.x = determineDynamicVelocity( scrollIntentions.horizontal, currentCoordinatesOffset.x, _scrollableParentBounds.width, threshold );
     }
 
-    if( scrollIntentions.vertical && isScrollEndReached( ScrollAxis.VERTICAL, scrollIntentions.vertical, scrollableParentBounds ) ) {
+    if( scrollIntentions.vertical && isScrollEndReached( ScrollAxis.VERTICAL, scrollIntentions.vertical, _scrollableParentBounds ) ) {
 
         // if scroll end is reached, reset to none
         scrollIntentions.vertical = ScrollIntention.NONE;
     }
     else if( scrollIntentions.vertical ) {
 
-        dynamicVelocity.y = determineDynamicVelocity( scrollIntentions.vertical, currentCoordinatesOffset.y, scrollableParentBounds.height, threshold );
+        dynamicVelocity.y = determineDynamicVelocity( scrollIntentions.vertical, currentCoordinatesOffset.y, _scrollableParentBounds.height, threshold );
     }
 
     return !!(scrollIntentions.horizontal || scrollIntentions.vertical);
