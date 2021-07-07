@@ -43,6 +43,13 @@ function prepareNodeCopyAsDragImage( srcNode:HTMLElement, dstNode:HTMLElement ) 
         const cs = getComputedStyle( srcNode );
         for( let i = 0; i < cs.length; i++ ) {
             const csName = cs[ i ];
+            
+            // transition-duration cause the dragging animation delay.
+            if ( csName === "transition-duration" ) {
+                dstNode.style.setProperty( csName, "0s", "" );
+                continue;
+            }
+            
             dstNode.style.setProperty( csName, cs.getPropertyValue( csName ), cs.getPropertyPriority( csName ) );
         }
 
